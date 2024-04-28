@@ -32,6 +32,9 @@ chrome_options.add_argument("--window-size=1920x1080") # Set the Chrome window s
 # Inputs
 STD_WAITING_TIME = 10
 TARGET_URL = "https://service.berlin.de/dienstleistung/120686/"
+IS_BOOK_APPT = True
+FULL_NAME = "Omar ElMaria"
+EMAIL = "omarmoataz6@gmail.com"
 
 # Instantiate the yagmail object
 yag = yagmail.SMTP("omarmoataz6@gmail.com", oauth2_file=os.path.expanduser("~")+"/email_authentication.json", smtp_ssl=False)
@@ -101,12 +104,39 @@ def main():
                 min_date = str(df_termine[df_termine["flag"]]["dates"].min().date())
                 max_date = str(df_termine[df_termine["flag"]]["dates"].max().date())
 
+                # Express min_date in the format dd.mm.yyyy
+                min_date_reformatted = ".".join(min_date.split("-")[::-1])
+
                 # Send an email
                 contents = [
                     f"""This is an automated notification to inform you that Anmeldung appointments in April or May have been found.
                     The earliest date is {min_date} and the latest date is {max_date}. Go book --> {TARGET_URL}"""
                 ]
                 subject = f"Anmeldung Appointments in April or May have been found. Earliest date is {min_date}"
+
+                # Attempt to book the appointment
+                if IS_BOOK_APPT:
+                    # Click on the earliest date
+                    driver.find_element(By.XPATH, f"//tr/td/a[contains(@aria-label, '{min_date_reformatted}')]").click()
+                    
+                    # Wait until the available times appear and click on the earliest available time
+                    WebDriverWait(driver, STD_WAITING_TIME).until(EC.element_to_be_clickable((By.XPATH, "//tr/td[@class='frei']/a"))).click()
+                    
+                    # Wait until the input fields appear and input your personal details
+                    WebDriverWait(driver, STD_WAITING_TIME).until(EC.presence_of_element_located((By.XPATH, "//input[@id='familyName']")))
+                    driver.find_element(By.XPATH, "//input[@id='familyName']").send_keys(FULL_NAME)
+                    time.sleep(0.5)
+                    driver.find_element(By.XPATH, "//input[@id='email']").send_keys(EMAIL)
+                    time.sleep(0.5)
+                    driver.find_element(By.XPATH, "//input[@id='emailequality']").send_keys(EMAIL)
+                    time.sleep(0.5)
+                    
+                    # Click on "AGB gelesen"
+                    driver.find_element(By.XPATH, "//input[@id='agbgelesen']").click()
+                    time.sleep(0.5)
+
+                    # Wait until "Termin eintragen" is clickable and click on it
+                    WebDriverWait(driver, STD_WAITING_TIME).until(EC.element_to_be_clickable((By.XPATH, "//button[@id='register_submit']"))).click()
             else:
                 contents = ["Appointments are available but not in April or May"]
                 subject = "Appointments are available but not in April or May"
@@ -130,4 +160,4 @@ if __name__ == "__main__":
         except Exception as e:
             yag.send(["omarmoataz6@gmail.com"], "An Error Occurred While Looking for Anmeldung Appointments", [f"Error: {str(e)}"])
         
-        time.sleep(30)
+        time.sleep(60)
