@@ -6,7 +6,7 @@ import time
 import pandas as pd
 import yagmail
 from selenium import webdriver
-from selenium.common.exceptions import TimeoutException, NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
@@ -39,8 +39,7 @@ yag = yagmail.SMTP("omarmoataz6@gmail.com", oauth2_file=os.path.expanduser("~")+
 driver = webdriver.Chrome(options=chrome_options)
 
 # Navigate to the target website
-# driver.get("https://service.berlin.de/dienstleistung/120686/")
-driver.get("https://service.berlin.de/dienstleistung/324173/")
+driver.get("https://service.berlin.de/dienstleistung/120686/")
 
 # Maximizing the Chrome window
 driver.maximize_window()
