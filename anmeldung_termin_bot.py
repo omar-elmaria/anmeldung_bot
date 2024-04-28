@@ -31,6 +31,7 @@ chrome_options.add_argument("--window-size=1920x1080") # Set the Chrome window s
 
 # Inputs
 STD_WAITING_TIME = 10
+TARGET_URL = "https://service.berlin.de/dienstleistung/120686/"
 
 # Instantiate the yagmail object
 yag = yagmail.SMTP("omarmoataz6@gmail.com", oauth2_file=os.path.expanduser("~")+"/email_authentication.json", smtp_ssl=False)
@@ -40,7 +41,7 @@ def main():
     driver = webdriver.Chrome(options=chrome_options)
 
     # Navigate to the target website
-    driver.get("https://service.berlin.de/dienstleistung/120686/")
+    driver.get(TARGET_URL)
 
     # Maximizing the Chrome window
     driver.maximize_window()
@@ -103,7 +104,7 @@ def main():
                 # Send an email
                 contents = [
                     f"""This is an automated notification to inform you that Anmeldung appointments in April or May have been found.
-                    The earliest date is {min_date} and the latest date is {max_date}. Go book!"""
+                    The earliest date is {min_date} and the latest date is {max_date}. Go book --> {TARGET_URL}"""
                 ]
                 subject = f"Anmeldung Appointments in April or May have been found. Earliest date is {min_date}"
             else:
@@ -119,12 +120,14 @@ def main():
     # Send the E-mail
     yag.send(["omarmoataz6@gmail.com"], subject, contents)
 
-    # Sleep for 5 seconds then quit the driver
-    time.sleep(5)
+    # Quit the driver
     driver.quit()
 
 if __name__ == "__main__":
-    try:
-        main()
-    except Exception as e:
-        yag.send(["omarmoataz6@gmail.com"], "An Error Occurred While Looking for Anmeldung Appointments", [f"Error: {str(e)}"])
+    while True:
+        try:
+            main()
+        except Exception as e:
+            yag.send(["omarmoataz6@gmail.com"], "An Error Occurred While Looking for Anmeldung Appointments", [f"Error: {str(e)}"])
+        
+        time.sleep(30)
