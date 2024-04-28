@@ -160,4 +160,4 @@ if __name__ == "__main__":
         except Exception as e:
             yag.send(["omarmoataz6@gmail.com"], "An Error Occurred While Looking for Anmeldung Appointments", [f"Error: {str(e)}"])
         
-        time.sleep(60)
+        time.sleep(90)
