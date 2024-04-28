@@ -151,7 +151,7 @@ def main():
     yag.send(["omarmoataz6@gmail.com"], subject, contents)
 
     # Quit the driver
-    driver.quit()
+    driver.close()
 
 if __name__ == "__main__":
     while True:
