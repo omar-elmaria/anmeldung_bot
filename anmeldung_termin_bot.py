@@ -35,89 +35,96 @@ STD_WAITING_TIME = 10
 # Instantiate the yagmail object
 yag = yagmail.SMTP("omarmoataz6@gmail.com", oauth2_file=os.path.expanduser("~")+"/email_authentication.json", smtp_ssl=False)
 
-# Instantiate the web driver
-driver = webdriver.Chrome(options=chrome_options)
+def main():
+    # Instantiate the web driver
+    driver = webdriver.Chrome(options=chrome_options)
 
-# Navigate to the target website
-driver.get("https://service.berlin.de/dienstleistung/120686/")
+    # Navigate to the target website
+    driver.get("https://service.berlin.de/dienstleistung/120686/")
 
-# Maximizing the Chrome window
-driver.maximize_window()
+    # Maximizing the Chrome window
+    driver.maximize_window()
 
-# Wait until the desired checkbox is clickable
-WebDriverWait(driver, STD_WAITING_TIME).until(EC.element_to_be_clickable((By.XPATH, "//input[@id='checkbox_overall']")))
+    # Wait until the desired checkbox is clickable
+    WebDriverWait(driver, STD_WAITING_TIME).until(EC.element_to_be_clickable((By.XPATH, "//input[@id='checkbox_overall']")))
 
-# Scroll down to the checkbox webelement
-driver.execute_script("arguments[0].scrollIntoView();", driver.find_element(By.XPATH, "//h2[text()='Hinweise zur Zuständigkeit']"))
+    # Scroll down to the checkbox webelement
+    driver.execute_script("arguments[0].scrollIntoView();", driver.find_element(By.XPATH, "//h2[text()='Hinweise zur Zuständigkeit']"))
 
-# Click the checkbox
-driver.find_element(By.XPATH, "//input[@id='checkbox_overall']").click()
+    # Click the checkbox
+    driver.find_element(By.XPATH, "//input[@id='checkbox_overall']").click()
 
-# Wait until the "An diesem Standort einen Termin buchen" button is clickable
-WebDriverWait(driver, STD_WAITING_TIME).until(EC.element_to_be_clickable((By.XPATH, "//button[@id='appointment_submit']"))).click()
+    # Wait until the "An diesem Standort einen Termin buchen" button is clickable
+    WebDriverWait(driver, STD_WAITING_TIME).until(EC.element_to_be_clickable((By.XPATH, "//button[@id='appointment_submit']"))).click()
 
-# Wait until this element is visible --> //tr/td
-try:
-    WebDriverWait(driver, STD_WAITING_TIME).until(EC.visibility_of_element_located((By.XPATH, "//tr/td")))
-    
-    # If this element is visible, then the calendar view will show up. Now, try to extract the Termine
+    # Wait until this element is visible --> //tr/td
     try:
-        results = driver.find_elements(By.XPATH, "//tr/td/a")
-        termine = []
-        for res in results:
-            termine.append(res.get_attribute("aria-label"))
+        WebDriverWait(driver, STD_WAITING_TIME).until(EC.visibility_of_element_located((By.XPATH, "//tr/td")))
         
-        # Change termine to a DataFrame
-        df_termine = pd.DataFrame(termine, columns=["termine"])
+        # If this element is visible, then the calendar view will show up. Now, try to extract the Termine
+        try:
+            results = driver.find_elements(By.XPATH, "//tr/td/a")
+            termine = []
+            for res in results:
+                termine.append(res.get_attribute("aria-label"))
+            
+            # Change termine to a DataFrame
+            df_termine = pd.DataFrame(termine, columns=["termine"])
 
-        # Remove None rows
-        df_termine = df_termine.dropna()
+            # Remove None rows
+            df_termine = df_termine.dropna()
 
-        # Extract the date from the termine string
-        df_termine["termine_cleaned"] = df_termine.apply(
-            lambda x: re.findall(pattern=r".*(?=\s-)", string=x["termine"])[0] if " - " in x["termine"] else None, axis=1
-        )
+            # Extract the date from the termine string
+            df_termine["termine_cleaned"] = df_termine.apply(
+                lambda x: re.findall(pattern=r".*(?=\s-)", string=x["termine"])[0] if " - " in x["termine"] else None, axis=1
+            )
 
-        # Change the date string to a datetime object. The format of the string is dd.mm.yyyy
-        df_termine["dates"] = pd.to_datetime(df_termine["termine_cleaned"], format="%d.%m.%Y")
+            # Change the date string to a datetime object. The format of the string is dd.mm.yyyy
+            df_termine["dates"] = pd.to_datetime(df_termine["termine_cleaned"], format="%d.%m.%Y")
 
-        # Extract the month from the dates
-        df_termine["month"] = df_termine.apply(lambda x: x["dates"].month, axis=1)
+            # Extract the month from the dates
+            df_termine["month"] = df_termine.apply(lambda x: x["dates"].month, axis=1)
 
-        # Check if any of the dates fall in April or May and if the column termine contains this substring "An diesem Tag einen Termin buchen"
-        df_termine["flag"] = df_termine.apply(
-            lambda x: True if (x["month"] == 4 or x["month"] == 5) and "An diesem Tag einen Termin buchen" in x["termine"] else False, axis=1
-        )
+            # Check if any of the dates fall in April or May and if the column termine contains this substring "An diesem Tag einen Termin buchen"
+            df_termine["flag"] = df_termine.apply(
+                lambda x: True if (x["month"] == 4 or x["month"] == 5) and "An diesem Tag einen Termin buchen" in x["termine"] else False, axis=1
+            )
 
-        # Check if any of the rows satisfy the above condition
-        flag = df_termine["flag"].values.any()
+            # Check if any of the rows satisfy the above condition
+            flag = df_termine["flag"].values.any()
 
-        # If any of the rows satisfy the above condition, then send an email
-        # Otherwise, print a message saying that appointments are available but not in April or May
-        if flag:
-            # Extract the minimum date with an appointment from the DataFrame
-            min_date = str(df_termine[df_termine["flag"]]["dates"].min().date())
-            max_date = str(df_termine[df_termine["flag"]]["dates"].max().date())
+            # If any of the rows satisfy the above condition, then send an email
+            # Otherwise, print a message saying that appointments are available but not in April or May
+            if flag:
+                # Extract the minimum date with an appointment from the DataFrame
+                min_date = str(df_termine[df_termine["flag"]]["dates"].min().date())
+                max_date = str(df_termine[df_termine["flag"]]["dates"].max().date())
 
-            # Send an email
-            contents = [
-                f"""This is an automated notification to inform you that Anmeldung appointments in April or May have been found.
-                The earliest date is {min_date} and the latest date is {max_date}. Go book!"""
-            ]
-            subject = f"Anmeldung Appointments in April or May have been found. Earliest date is {min_date}"
-        else:
-            contents = ["Appointments are available but not in April or May"]
-            subject = "Appointments are available but not in April or May"
-    except NoSuchElementException:
-        contents = ["Calendar view exists but no appointments available"]
-        subject = "Calendar view exists but no appointments available"
-except TimeoutException:
-    contents = ["Calendar view does not exist. No Anmeldung appointments available"]
-    subject = "Calendar view does not exist. No Anmeldung appointments available"
+                # Send an email
+                contents = [
+                    f"""This is an automated notification to inform you that Anmeldung appointments in April or May have been found.
+                    The earliest date is {min_date} and the latest date is {max_date}. Go book!"""
+                ]
+                subject = f"Anmeldung Appointments in April or May have been found. Earliest date is {min_date}"
+            else:
+                contents = ["Appointments are available but not in April or May"]
+                subject = "Appointments are available but not in April or May"
+        except NoSuchElementException:
+            contents = ["Calendar view exists but no appointments available"]
+            subject = "Calendar view exists but no appointments available"
+    except TimeoutException:
+        contents = ["Calendar view does not exist. No Anmeldung appointments available"]
+        subject = "Calendar view does not exist. No Anmeldung appointments available"
 
-# Send the E-mail
-yag.send(["omarmoataz6@gmail.com"], subject, contents)
+    # Send the E-mail
+    yag.send(["omarmoataz6@gmail.com"], subject, contents)
 
-# Sleep for 5 seconds then quit the driver
-time.sleep(5)
-driver.quit()
+    # Sleep for 5 seconds then quit the driver
+    time.sleep(5)
+    driver.quit()
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as e:
+        yag.send(["omarmoataz6@gmail.com"], "An Error Occurred While Looking for Anmeldung Appointments", [f"Error: {str(e)}"])
