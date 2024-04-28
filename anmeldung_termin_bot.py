@@ -154,10 +154,7 @@ def main():
     driver.quit()
 
 if __name__ == "__main__":
-    while True:
-        try:
-            main()
-        except Exception as e:
-            yag.send(["omarmoataz6@gmail.com"], "An Error Occurred While Looking for Anmeldung Appointments", [f"Error: {str(e)}"])
-        
-        time.sleep(90)
+    try:
+        main()
+    except Exception as e:
+        yag.send(["omarmoataz6@gmail.com"], "An Error Occurred While Looking for Anmeldung Appointments", [f"Error: {str(e)}"])
