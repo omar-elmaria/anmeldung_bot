@@ -140,6 +140,9 @@ def main():
 
                     # Wait until "Termin eintragen" is clickable and click on it
                     WebDriverWait(driver, STD_WAITING_TIME).until(EC.element_to_be_clickable((By.XPATH, "//button[@id='register_submit']"))).click()
+
+                    # Send a success Email, saying that an appointment has been booked
+                    yag.send([EMAIL], f"An Appointment has been booked on {min_date}", [f"An Appointment has been booked on {min_date}"])
             else:
                 contents = ["Appointments are available but not in April or May"]
                 subject = "Appointments are available but not in April or May"
@@ -151,7 +154,7 @@ def main():
         subject = "Calendar view does not exist. No Anmeldung appointments available"
 
     # Send the E-mail
-    yag.send(["omarmoataz6@gmail.com"], subject, contents)
+    yag.send([EMAIL], subject, contents)
 
     # Quit the driver
     driver.close()
@@ -160,4 +163,4 @@ if __name__ == "__main__":
     try:
         main()
     except Exception as e:
-        yag.send(["omarmoataz6@gmail.com"], "An Error Occurred While Looking for Anmeldung Appointments", [f"Error: {str(e)}"])
+        yag.send([EMAIL], "An Error Occurred While Looking for Anmeldung Appointments", [f"Error: {str(e)}"])
