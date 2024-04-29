@@ -91,7 +91,7 @@ def main():
 
             # Check if any of the dates fall in April or May and if the column termine contains this substring "An diesem Tag einen Termin buchen"
             df_termine["flag"] = df_termine.apply(
-                lambda x: True if (x["month"] == 4 or x["month"] == 5) and "An diesem Tag einen Termin buchen" in x["termine"] else False, axis=1
+                lambda x: True if (x["month"] == 5) and "An diesem Tag einen Termin buchen" in x["termine"] else False, axis=1
             )
 
             # Check if any of the rows satisfy the above condition
