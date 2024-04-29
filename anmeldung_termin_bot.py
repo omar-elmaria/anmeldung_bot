@@ -10,7 +10,7 @@ from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support.ui import WebDriverWait, Select
 
 pd.set_option("display.max_rows", 100)
 
@@ -129,6 +129,9 @@ def main():
                     driver.find_element(By.XPATH, "//input[@id='email']").send_keys(EMAIL)
                     time.sleep(0.5)
                     driver.find_element(By.XPATH, "//input[@id='emailequality']").send_keys(EMAIL)
+                    time.sleep(0.5)
+                    select_survey = Select(driver.find_element(by=By.XPATH, value="//select[@name='surveyAccepted']"))
+                    select_survey.select_by_index(2)
                     time.sleep(0.5)
                     
                     # Click on "AGB gelesen"
